@@ -1,27 +1,35 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { connectDB } = require('./config/db');
+const connectDB = require('./config/db');
 
 const app = express();
-app.use(cors({ origin: '*' }));
+
+// CORS configuration
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true
+}));
+
 app.use(express.json());
 
-app.use('/api', require('./routes/health'));
-
-// simple demo deals route (Phase 1)
-app.get('/api/deals', (_req, res) => {
-  res.json([{ _id: 'demo1', title: '₹59 Samosa Combo', price: 59, vendorId: 'v1' }]);
-});
-
-const PORT = process.env.PORT || 8080;
-
-(async () => {
+// Connect to MongoDB and start server
+const startServer = async () => {
   try {
-    await connectDB(process.env.MONGO_URI);
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-  } catch (err) {
-    console.error('Startup error:', err);
+    await connectDB();
+    
+    // Routes
+    app.use('/api/deals', require('./routes/deals'));
+    app.use('/api/auth', require('./routes/auth'));
+
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
     process.exit(1);
   }
-})();
+};
+
+startServer();
